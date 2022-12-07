@@ -20,7 +20,7 @@ except ImportError:
 
 
 LINE_COUNT = 4
-COLL_COUNT = 4
+COLL_COUNT = 5
 
 
 def log(msg, errorMsg = False, endLine=True):
@@ -94,7 +94,7 @@ def is_draw(board) -> bool:
 
 def is_win_horizontally(board, player):
     for row in board:
-        for coll_iter in range(COLL_COUNT - 3):
+        for coll_iter in range(len(row) - 3):
             if all([piece == player
                     for piece in [row[coll_iter + seq_iter] for seq_iter in range(4)]]):
                 return True
@@ -102,34 +102,51 @@ def is_win_horizontally(board, player):
     return False
 
 
-def is_win(board, player) -> bool:
+def is_win_diag(board, player):
+    for row_iter in range(3, len(board)):
+        for coll_iter in range(len(board[0]) - 3):
+            if all([piece == player
+                    for piece in [board[row_iter - seq_iter][coll_iter + seq_iter] for seq_iter in range(4)]]):
+                return True
 
-    # horizontally and vertically
-    if is_win_horizontally(board, player) or is_win_horizontally(np.transpose(board), player):
-        return True
     return False
 
-    # diagonalls
+
+def is_win(board, player) -> bool:
+    # horizontally and vertically
+    # diagonals => range(3, LINE_COUNT) ---- range(COLL_COUNT - 3)
+    if is_win_horizontally(board, player) \
+       or is_win_horizontally(np.transpose(board), player) \
+       or is_win_diag(board, player) \
+       or is_win_diag(np.flipud(board), player):
+        return True
+
+    return False
 
 
 if __name__ == '__main__':
     board = init_board(LINE_COUNT, COLL_COUNT)
     # board = np.flip(board)
     print(board)
-    place_piece_onefunc(board, 0, 1)
-    place_piece_onefunc(board, 0, 1)
+    place_piece_onefunc(board, 0, 2)
+    place_piece_onefunc(board, 0, 2)
     place_piece_onefunc(board, 1, 1)
     place_piece_onefunc(board, 1, 1)
     place_piece_onefunc(board, 0, 1)
-    place_piece_onefunc(board, 0, 1)
+    place_piece_onefunc(board, 4, 1)
     place_piece_onefunc(board, 3, 1)
     place_piece_onefunc(board, 2, 2)
-
-    # board[1][1] = 1
-    # board[0][1] = 1
+    place_piece_onefunc(board, 2, 1)
+    place_piece_onefunc(board, 3, 2)
+    place_piece_onefunc(board, 3, 1)
+    place_piece_onefunc(board, 4, 1)
+    place_piece_onefunc(board, 4, 2)
+    place_piece_onefunc(board, 1, 1)
+    place_piece_onefunc(board, 0, 1)
 
 
     print(board)
     print(is_draw(board))
     print(board)
     print(is_win(board, 1))
+    # print(np.flipud(board))
