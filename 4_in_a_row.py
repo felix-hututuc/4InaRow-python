@@ -25,6 +25,11 @@ COL_COUNT = 5
 OPPONENT = 2
 TURN = 1
 
+CELL_SIZE = 75
+PIECE_RADIUS = int(CELL_SIZE / 2 - 4)
+SCREEN_WIDTH = COL_COUNT * CELL_SIZE
+SCREEN_HEIGHT = (ROW_COUNT + 1) * CELL_SIZE
+
 
 def log(msg, errorMsg = False, endLine=True):
     if not errorMsg:
@@ -41,6 +46,8 @@ def init():
     global COL_COUNT
     global OPPONENT
     global TURN
+    global SCREEN_HEIGHT
+    global SCREEN_WIDTH
 
     if len(sys.argv) < 5:
         log("Wrong number of arguments!")
@@ -58,6 +65,8 @@ def init():
     try:
         ROW_COUNT = int(sys.argv[2])
         COL_COUNT = int(sys.argv[3])
+        SCREEN_WIDTH = COL_COUNT * CELL_SIZE
+        SCREEN_HEIGHT = (ROW_COUNT + 1) * CELL_SIZE
         if ROW_COUNT < 6 or ROW_COUNT > 9 or COL_COUNT < 6 or COL_COUNT > 9:
             log("Rows and collumns numbers must be between 6 and 9")
             exit(-1)
@@ -177,21 +186,76 @@ def is_win(board, player) -> bool:
     return False
 
 
+def draw_board(board):
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+
+    for it_col in range(COL_COUNT):
+        for it_row in range(ROW_COUNT):
+            pygame.draw.rect(screen,
+                             pygame.color.THECOLORS['blue'],
+                             (it_col * CELL_SIZE,
+                              it_row * CELL_SIZE + CELL_SIZE,
+                              CELL_SIZE,
+                              CELL_SIZE))
+
+            piece_color = pygame.color.THECOLORS['white']
+            if board[it_row][it_col] == __PLAYER_ONE__:
+                piece_color = pygame.color.THECOLORS['red']
+            elif board[it_row][it_col] == __PLAYER_TWO__:
+                piece_color = pygame.color.THECOLORS['yellow']
+            elif board[it_row][it_col] == __COMPUTER__:
+                piece_color = pygame.color.THECOLORS['green']
+
+            pygame.draw.circle(screen,
+                               piece_color,
+                               (int(it_col * CELL_SIZE + CELL_SIZE / 2),
+                                int(it_row * CELL_SIZE + CELL_SIZE + CELL_SIZE / 2)),
+                               PIECE_RADIUS)
+
+    pygame.display.update()
+
+
+def display_win_screen(winner):
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+
+    if winner == __PLAYER_ONE__:
+        winner = 'Player one'
+    elif winner == __PLAYER_TWO__:
+        winner = 'Player two'
+    else:
+        winner = 'Computer'
+
+    font = pygame.font.SysFont("verdana", int(SCREEN_WIDTH / 15))
+    pygame.time.wait(300)
+    pygame.draw.rect(screen,
+                     pygame.color.THECOLORS['black'],
+                     (0, 0, SCREEN_WIDTH, SCREEN_HEIGHT))
+    label = font.render(f"{winner} won!", True, pygame.color.THECOLORS['red'])
+    screen.blit(label, (SCREEN_HEIGHT / 4, 4 * SCREEN_WIDTH / 9))
+    pygame.display.update()
+    pygame.time.wait(4000)
+
+
 def game_loop(board):
     global TURN
 
     while True:
         print(board)
+        draw_board(board)
+
         log(f"Player {TURN}'s turn!")
         chosen_col = int(input("Choose a column: "))
         if not place_piece_onefunc(board, chosen_col, TURN):
             continue
         if is_win(board, TURN):
             print(board)
+            draw_board(board)
+            display_win_screen(TURN)
             log(f"Player {TURN} won!")
             break
         if is_draw(board):
             print(board)
+            draw_board(board)
             log("Draw!")
             break
         TURN = __PLAYER_ONE__ if TURN == OPPONENT else OPPONENT
@@ -199,6 +263,7 @@ def game_loop(board):
 
 if __name__ == '__main__':
     init()
+    pygame.init()
     board = init_board(ROW_COUNT, COL_COUNT)
     game_loop(board)
     # board = np.flip(board)
