@@ -1,6 +1,8 @@
+import math
 import os
-import sys
 import subprocess
+import sys
+import time
 import traceback
 
 try:
@@ -17,6 +19,7 @@ except ImportError:
 
     import pygame
 
+__EMPTY__ = 0
 __PLAYER_ONE__ = 1
 __PLAYER_TWO__ = 2
 __COMPUTER__ = 3
@@ -29,6 +32,12 @@ CELL_SIZE = 75
 PIECE_RADIUS = int(CELL_SIZE / 2 - 4)
 SCREEN_WIDTH = COL_COUNT * CELL_SIZE
 SCREEN_HEIGHT = (ROW_COUNT + 1) * CELL_SIZE
+SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+
+COLORS = {__EMPTY__: pygame.color.THECOLORS['white'],
+          __PLAYER_ONE__: pygame.color.THECOLORS['red'],
+          __PLAYER_TWO__: pygame.color.THECOLORS['yellow'],
+          __COMPUTER__: pygame.color.THECOLORS['green']}
 
 
 def log(msg, errorMsg = False, endLine=True):
@@ -48,6 +57,7 @@ def init():
     global TURN
     global SCREEN_HEIGHT
     global SCREEN_WIDTH
+    global SCREEN
 
     if len(sys.argv) < 5:
         log("Wrong number of arguments!")
@@ -67,6 +77,7 @@ def init():
         COL_COUNT = int(sys.argv[3])
         SCREEN_WIDTH = COL_COUNT * CELL_SIZE
         SCREEN_HEIGHT = (ROW_COUNT + 1) * CELL_SIZE
+        SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         if ROW_COUNT < 6 or ROW_COUNT > 9 or COL_COUNT < 6 or COL_COUNT > 9:
             log("Rows and collumns numbers must be between 6 and 9")
             exit(-1)
@@ -187,27 +198,17 @@ def is_win(board, player) -> bool:
 
 
 def draw_board(board):
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-
     for it_col in range(COL_COUNT):
         for it_row in range(ROW_COUNT):
-            pygame.draw.rect(screen,
+            pygame.draw.rect(SCREEN,
                              pygame.color.THECOLORS['blue'],
                              (it_col * CELL_SIZE,
                               it_row * CELL_SIZE + CELL_SIZE,
                               CELL_SIZE,
                               CELL_SIZE))
 
-            piece_color = pygame.color.THECOLORS['white']
-            if board[it_row][it_col] == __PLAYER_ONE__:
-                piece_color = pygame.color.THECOLORS['red']
-            elif board[it_row][it_col] == __PLAYER_TWO__:
-                piece_color = pygame.color.THECOLORS['yellow']
-            elif board[it_row][it_col] == __COMPUTER__:
-                piece_color = pygame.color.THECOLORS['green']
-
-            pygame.draw.circle(screen,
-                               piece_color,
+            pygame.draw.circle(SCREEN,
+                               COLORS[board[it_row][it_col]],
                                (int(it_col * CELL_SIZE + CELL_SIZE / 2),
                                 int(it_row * CELL_SIZE + CELL_SIZE + CELL_SIZE / 2)),
                                PIECE_RADIUS)
@@ -216,49 +217,91 @@ def draw_board(board):
 
 
 def display_win_screen(winner):
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-
     if winner == __PLAYER_ONE__:
-        winner = 'Player one'
+        winner_str = 'Player one'
     elif winner == __PLAYER_TWO__:
-        winner = 'Player two'
+        winner_str = 'Player two'
     else:
-        winner = 'Computer'
+        winner_str = 'Computer'
 
     font = pygame.font.SysFont("verdana", int(SCREEN_WIDTH / 15))
     pygame.time.wait(300)
-    pygame.draw.rect(screen,
+    pygame.draw.rect(SCREEN,
                      pygame.color.THECOLORS['black'],
                      (0, 0, SCREEN_WIDTH, SCREEN_HEIGHT))
-    label = font.render(f"{winner} won!", True, pygame.color.THECOLORS['red'])
-    screen.blit(label, (SCREEN_HEIGHT / 4, 4 * SCREEN_WIDTH / 9))
+    label = font.render(f"{winner_str} won!", True, COLORS[winner])
+    SCREEN.blit(label, (SCREEN_HEIGHT / 4, 4 * SCREEN_WIDTH / 9))
     pygame.display.update()
-    pygame.time.wait(4000)
+
+    start_time = time.time()
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT or event.type == pygame.MOUSEBUTTONDOWN:
+                sys.exit()
+        if time.time() - start_time >= 5:
+            sys.exit()
 
 
 def game_loop(board):
     global TURN
 
-    while True:
-        print(board)
-        draw_board(board)
+    draw_board(board)
 
-        log(f"Player {TURN}'s turn!")
-        chosen_col = int(input("Choose a column: "))
-        if not place_piece_onefunc(board, chosen_col, TURN):
-            continue
-        if is_win(board, TURN):
-            print(board)
-            draw_board(board)
-            display_win_screen(TURN)
-            log(f"Player {TURN} won!")
-            break
-        if is_draw(board):
-            print(board)
-            draw_board(board)
-            log("Draw!")
-            break
-        TURN = __PLAYER_ONE__ if TURN == OPPONENT else OPPONENT
+    while True:
+        # print(board)
+        # draw_board(board)
+
+        for event in pygame.event.get():
+
+            if event.type == pygame.QUIT:
+                sys.exit()
+
+            elif event.type == pygame.MOUSEMOTION:
+                x_pos = event.pos[0]
+
+                pygame.draw.rect(SCREEN,
+                                 pygame.color.THECOLORS['black'],
+                                 (0, 0, SCREEN_WIDTH, CELL_SIZE))
+                pygame.draw.circle(SCREEN,
+                                   COLORS[TURN],
+                                   (x_pos, int(CELL_SIZE / 2)),
+                                   PIECE_RADIUS)
+
+                pygame.display.update()
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                x_pos = event.pos[0]
+
+                column = int(math.floor(x_pos / CELL_SIZE))
+
+                pygame.draw.rect(SCREEN,
+                                 pygame.color.THECOLORS['black'],
+                                 (0, 0, SCREEN_WIDTH, CELL_SIZE))
+                pygame.draw.circle(SCREEN,
+                                   COLORS[OPPONENT],
+                                   (x_pos, int(CELL_SIZE / 2)),
+                                   PIECE_RADIUS)
+                pygame.display.update()
+
+                if not place_piece_onefunc(board, column, TURN):
+                    continue
+                else:
+                    print(board)
+                    draw_board(board)
+
+                if is_win(board, TURN):
+                    print(board)
+                    log(f"Player {TURN} won!")
+                    draw_board(board)
+                    display_win_screen(TURN)
+
+                if is_draw(board):
+                    print(board)
+                    draw_board(board)
+                    log("Draw!")
+                    break
+
+                TURN = __PLAYER_ONE__ if TURN == OPPONENT else OPPONENT
 
 
 if __name__ == '__main__':
@@ -266,27 +309,3 @@ if __name__ == '__main__':
     pygame.init()
     board = init_board(ROW_COUNT, COL_COUNT)
     game_loop(board)
-    # board = np.flip(board)
-    # print(board)
-    # place_piece_onefunc(board, 0, 2)
-    # place_piece_onefunc(board, 0, 2)
-    # place_piece_onefunc(board, 1, 1)
-    # place_piece_onefunc(board, 1, 1)
-    # place_piece_onefunc(board, 0, 1)
-    # place_piece_onefunc(board, 4, 1)
-    # place_piece_onefunc(board, 3, 1)
-    # place_piece_onefunc(board, 2, 2)
-    # place_piece_onefunc(board, 2, 1)
-    # place_piece_onefunc(board, 3, 2)
-    # place_piece_onefunc(board, 3, 1)
-    # place_piece_onefunc(board, 4, 1)
-    # place_piece_onefunc(board, 4, 2)
-    # place_piece_onefunc(board, 1, 1)
-    # place_piece_onefunc(board, 0, 1)
-
-
-    # print(board)
-    # print(is_draw(board))
-    # print(board)
-    # print(is_win(board, 1))
-    # print(np.flipud(board))
