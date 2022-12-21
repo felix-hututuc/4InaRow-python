@@ -248,8 +248,6 @@ def game_loop(board):
     draw_board(board)
 
     while True:
-        # print(board)
-        # draw_board(board)
 
         for event in pygame.event.get():
 
@@ -262,6 +260,9 @@ def game_loop(board):
                 pygame.draw.rect(SCREEN,
                                  pygame.color.THECOLORS['black'],
                                  (0, 0, SCREEN_WIDTH, CELL_SIZE))
+                x_pos = PIECE_RADIUS if x_pos < PIECE_RADIUS else \
+                        SCREEN_WIDTH - PIECE_RADIUS if x_pos > SCREEN_WIDTH - PIECE_RADIUS else \
+                        x_pos
                 pygame.draw.circle(SCREEN,
                                    COLORS[TURN],
                                    (x_pos, int(CELL_SIZE / 2)),
@@ -277,6 +278,9 @@ def game_loop(board):
                 pygame.draw.rect(SCREEN,
                                  pygame.color.THECOLORS['black'],
                                  (0, 0, SCREEN_WIDTH, CELL_SIZE))
+                x_pos = PIECE_RADIUS if x_pos < PIECE_RADIUS else \
+                        SCREEN_WIDTH - PIECE_RADIUS if x_pos > SCREEN_WIDTH - PIECE_RADIUS else \
+                        x_pos
                 pygame.draw.circle(SCREEN,
                                    COLORS[OPPONENT],
                                    (x_pos, int(CELL_SIZE / 2)),
