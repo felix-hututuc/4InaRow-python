@@ -216,7 +216,7 @@ def draw_board(board):
     pygame.display.update()
 
 
-def display_win_screen(winner):
+def display_end_screen(winner, is_draw: bool = False):
     if winner == __PLAYER_ONE__:
         winner_str = 'Player one'
     elif winner == __PLAYER_TWO__:
@@ -229,7 +229,11 @@ def display_win_screen(winner):
     pygame.draw.rect(SCREEN,
                      pygame.color.THECOLORS['black'],
                      (0, 0, SCREEN_WIDTH, SCREEN_HEIGHT))
-    label = font.render(f"{winner_str} won!", True, COLORS[winner])
+
+    if is_draw:
+        label = font.render(f"Draw!", True, COLORS[__EMPTY__])
+    else:
+        label = font.render(f"{winner_str} won!", True, COLORS[winner])
     SCREEN.blit(label, (SCREEN_HEIGHT / 4, 4 * SCREEN_WIDTH / 9))
     pygame.display.update()
 
@@ -293,17 +297,10 @@ def game_loop(board):
                     print(board)
                     draw_board(board)
 
-                if is_win(board, TURN):
-                    print(board)
-                    log(f"Player {TURN} won!")
-                    draw_board(board)
-                    display_win_screen(TURN)
-
-                if is_draw(board):
+                if is_win(board, TURN) or is_draw(board):
                     print(board)
                     draw_board(board)
-                    log("Draw!")
-                    break
+                    display_end_screen(TURN, is_draw(board))
 
                 TURN = __PLAYER_ONE__ if TURN == OPPONENT else OPPONENT
 
