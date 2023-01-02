@@ -78,7 +78,7 @@ def init():
         SCREEN_WIDTH = COL_COUNT * CELL_SIZE
         SCREEN_HEIGHT = (ROW_COUNT + 1) * CELL_SIZE
         SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-        if ROW_COUNT < 6 or ROW_COUNT > 9 or COL_COUNT < 6 or COL_COUNT > 9:
+        if ROW_COUNT < 4 or ROW_COUNT > 9 or COL_COUNT < 4 or COL_COUNT > 9:
             log("Rows and collumns numbers must be between 6 and 9")
             exit(-1)
     except TypeError:
@@ -216,6 +216,28 @@ def draw_board(board):
     pygame.display.update()
 
 
+def display_diff_choice():
+    font = pygame.font.SysFont("verdana", int(SCREEN_WIDTH / 15), True)
+    pygame.time.wait(300)
+    pygame.draw.rect(SCREEN,
+                     pygame.color.THECOLORS['cyan'],
+                     (0, 0, SCREEN_WIDTH, SCREEN_HEIGHT))
+
+    label = font.render("Choose a difficulty:", True, pygame.color.THECOLORS['black'])
+    SCREEN.blit(label, (SCREEN_WIDTH / 7, SCREEN_HEIGHT / 8))
+
+    pygame.draw.ellipse(SCREEN,
+                        pygame.color.THECOLORS['green'],
+                        (SCREEN_WIDTH / 7, 3 * SCREEN_HEIGHT / 8))
+
+    pygame.display.update()
+    while(True):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT or event.type == pygame.MOUSEBUTTONDOWN:
+                sys.exit()
+        # pygame.time.wait(10)
+
+
 def display_end_screen(winner, is_draw: bool = False):
     if winner == __PLAYER_ONE__:
         winner_str = 'Player one'
@@ -224,7 +246,7 @@ def display_end_screen(winner, is_draw: bool = False):
     else:
         winner_str = 'Computer'
 
-    font = pygame.font.SysFont("verdana", int(SCREEN_WIDTH / 15))
+    font = pygame.font.SysFont("verdana", int(SCREEN_WIDTH / 15), True)
     pygame.time.wait(300)
     pygame.draw.rect(SCREEN,
                      pygame.color.THECOLORS['black'],
@@ -234,7 +256,7 @@ def display_end_screen(winner, is_draw: bool = False):
         label = font.render(f"Draw!", True, COLORS[__EMPTY__])
     else:
         label = font.render(f"{winner_str} won!", True, COLORS[winner])
-    SCREEN.blit(label, (SCREEN_HEIGHT / 4, 4 * SCREEN_WIDTH / 9))
+    SCREEN.blit(label, (SCREEN_WIDTH / 5, 2.7 * SCREEN_HEIGHT / 7))
     pygame.display.update()
 
     start_time = time.time()
@@ -249,6 +271,7 @@ def display_end_screen(winner, is_draw: bool = False):
 def game_loop(board):
     global TURN
 
+    display_diff_choice()
     draw_board(board)
 
     while True:
@@ -264,9 +287,11 @@ def game_loop(board):
                 pygame.draw.rect(SCREEN,
                                  pygame.color.THECOLORS['black'],
                                  (0, 0, SCREEN_WIDTH, CELL_SIZE))
+
                 x_pos = PIECE_RADIUS if x_pos < PIECE_RADIUS else \
                         SCREEN_WIDTH - PIECE_RADIUS if x_pos > SCREEN_WIDTH - PIECE_RADIUS else \
                         x_pos
+
                 pygame.draw.circle(SCREEN,
                                    COLORS[TURN],
                                    (x_pos, int(CELL_SIZE / 2)),
@@ -282,13 +307,16 @@ def game_loop(board):
                 pygame.draw.rect(SCREEN,
                                  pygame.color.THECOLORS['black'],
                                  (0, 0, SCREEN_WIDTH, CELL_SIZE))
+
                 x_pos = PIECE_RADIUS if x_pos < PIECE_RADIUS else \
                         SCREEN_WIDTH - PIECE_RADIUS if x_pos > SCREEN_WIDTH - PIECE_RADIUS else \
                         x_pos
+
                 pygame.draw.circle(SCREEN,
                                    COLORS[OPPONENT],
                                    (x_pos, int(CELL_SIZE / 2)),
                                    PIECE_RADIUS)
+
                 pygame.display.update()
 
                 if not place_piece_onefunc(board, column, TURN):
