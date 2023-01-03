@@ -228,14 +228,49 @@ def display_diff_choice():
 
     pygame.draw.ellipse(SCREEN,
                         pygame.color.THECOLORS['green'],
-                        (SCREEN_WIDTH / 7, 3 * SCREEN_HEIGHT / 8))
+                        (SCREEN_WIDTH / 7, 2 * SCREEN_HEIGHT / 8, 5 * SCREEN_WIDTH / 7, 1.5 * SCREEN_HEIGHT / 8))
+
+    label = font.render("EASY", True, pygame.color.THECOLORS['black'])
+    SCREEN.blit(label, (2.8 * SCREEN_WIDTH / 7, 2.45 * SCREEN_HEIGHT / 8))
+
+    pygame.draw.ellipse(SCREEN,
+                        pygame.color.THECOLORS['yellow'],
+                        (SCREEN_WIDTH / 7, 4 * SCREEN_HEIGHT / 8, 5 * SCREEN_WIDTH / 7, 1.5 * SCREEN_HEIGHT / 8))
+
+    label = font.render("MEDIUM", True, pygame.color.THECOLORS['black'])
+    SCREEN.blit(label, (2.4 * SCREEN_WIDTH / 7, 4.45 * SCREEN_HEIGHT / 8))
+
+    pygame.draw.ellipse(SCREEN,
+                        pygame.color.THECOLORS['red'],
+                        (SCREEN_WIDTH / 7, 6 * SCREEN_HEIGHT / 8, 5 * SCREEN_WIDTH / 7, 1.5 * SCREEN_HEIGHT / 8))
+
+    label = font.render("HARD", True, pygame.color.THECOLORS['black'])
+    SCREEN.blit(label, (2.8 * SCREEN_WIDTH / 7, 6.45 * SCREEN_HEIGHT / 8))
 
     pygame.display.update()
+
+
+def get_difficulty():
     while(True):
         for event in pygame.event.get():
-            if event.type == pygame.QUIT or event.type == pygame.MOUSEBUTTONDOWN:
-                sys.exit()
-        # pygame.time.wait(10)
+            if event.type == pygame.QUIT:
+                sys.exit(0)
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                x_pos = event.pos[0]
+                y_pos = event.pos[1]
+
+                if not (x_pos >= SCREEN_WIDTH / 7 and x_pos <= 5 * SCREEN_WIDTH / 7):
+                    continue
+
+                if y_pos >= 2 * SCREEN_HEIGHT / 8 and y_pos <= 3.5 * SCREEN_HEIGHT / 8:
+                    return 0
+
+                if y_pos >= 4 * SCREEN_HEIGHT / 8 and y_pos <= 5.5 * SCREEN_HEIGHT / 8:
+                    return 1
+
+                if y_pos >= 6 * SCREEN_HEIGHT / 8 and y_pos <= 7.5 * SCREEN_HEIGHT / 8:
+                    return 2
 
 
 def display_end_screen(winner, is_draw: bool = False):
@@ -271,7 +306,6 @@ def display_end_screen(winner, is_draw: bool = False):
 def game_loop(board):
     global TURN
 
-    display_diff_choice()
     draw_board(board)
 
     while True:
@@ -337,4 +371,10 @@ if __name__ == '__main__':
     init()
     pygame.init()
     board = init_board(ROW_COUNT, COL_COUNT)
+
+    if OPPONENT == __COMPUTER__:
+        display_diff_choice()
+        diff = get_difficulty()
+        log(diff)
+
     game_loop(board)
