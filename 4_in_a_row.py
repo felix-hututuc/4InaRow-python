@@ -4,6 +4,7 @@ import subprocess
 import sys
 import time
 import traceback
+import random
 
 try:
     import numpy as np
@@ -303,8 +304,19 @@ def display_end_screen(winner, is_draw: bool = False):
             sys.exit()
 
 
+def get_computer_move(difficulty):
+    if difficulty == 0:
+        collumn = random.randrange(0, COL_COUNT)
+        return collumn
+
+
 def game_loop(board):
     global TURN
+
+    if OPPONENT == __COMPUTER__:
+        display_diff_choice()
+        diff = get_difficulty()
+        log(diff)
 
     draw_board(board)
 
@@ -364,17 +376,25 @@ def game_loop(board):
                     draw_board(board)
                     display_end_screen(TURN, is_draw(board))
 
-                TURN = __PLAYER_ONE__ if TURN == OPPONENT else OPPONENT
+                if OPPONENT == __COMPUTER__:
+                    computed_collumn = get_computer_move(diff)
+                    while not place_piece_onefunc(board, computed_collumn, OPPONENT):
+                        computed_collumn = get_computer_move(diff)
+                    else:
+                        print(board)
+                        draw_board(board)
+
+                    if is_win(board, OPPONENT) or is_draw(board):
+                        print(board)
+                        draw_board(board)
+                        display_end_screen(OPPONENT, is_draw(board))
+                else:
+                    TURN = __PLAYER_ONE__ if TURN == OPPONENT else OPPONENT
 
 
 if __name__ == '__main__':
     init()
     pygame.init()
     board = init_board(ROW_COUNT, COL_COUNT)
-
-    if OPPONENT == __COMPUTER__:
-        display_diff_choice()
-        diff = get_difficulty()
-        log(diff)
 
     game_loop(board)
