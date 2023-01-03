@@ -24,12 +24,12 @@ __EMPTY__ = 0
 __PLAYER_ONE__ = 1
 __PLAYER_TWO__ = 2
 __COMPUTER__ = 3
-ROW_COUNT = 4
-COL_COUNT = 5
+ROW_COUNT = 6
+COL_COUNT = 7
 OPPONENT = 2
 TURN = 1
 
-CELL_SIZE = 75
+CELL_SIZE = 90
 PIECE_RADIUS = int(CELL_SIZE / 2 - 4)
 SCREEN_WIDTH = COL_COUNT * CELL_SIZE
 SCREEN_HEIGHT = (ROW_COUNT + 1) * CELL_SIZE
@@ -79,6 +79,7 @@ def init():
         SCREEN_WIDTH = COL_COUNT * CELL_SIZE
         SCREEN_HEIGHT = (ROW_COUNT + 1) * CELL_SIZE
         SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        pygame.display.set_caption("Connect Four")
         if ROW_COUNT < 4 or ROW_COUNT > 9 or COL_COUNT < 4 or COL_COUNT > 9:
             log("Rows and collumns numbers must be between 6 and 9")
             exit(-1)
@@ -318,7 +319,20 @@ def game_loop(board):
         diff = get_difficulty()
         log(diff)
 
+    pygame.draw.rect(SCREEN,
+                pygame.color.THECOLORS['black'],
+                (0, 0, SCREEN_WIDTH, CELL_SIZE))
     draw_board(board)
+
+    if OPPONENT == __COMPUTER__ and TURN == __COMPUTER__:
+        computed_collumn = get_computer_move(diff)
+        while not place_piece_onefunc(board, computed_collumn, OPPONENT):
+            computed_collumn = get_computer_move(diff)
+        else:
+            pygame.time.wait(500)
+            print(board)
+            draw_board(board)
+            TURN = __PLAYER_ONE__
 
     while True:
 
@@ -381,6 +395,7 @@ def game_loop(board):
                     while not place_piece_onefunc(board, computed_collumn, OPPONENT):
                         computed_collumn = get_computer_move(diff)
                     else:
+                        pygame.time.wait(500)
                         print(board)
                         draw_board(board)
 
