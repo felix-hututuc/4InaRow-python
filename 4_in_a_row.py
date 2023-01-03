@@ -1,10 +1,9 @@
 import math
-import os
+import random
 import subprocess
 import sys
 import time
 import traceback
-import random
 
 try:
     import numpy as np
@@ -29,7 +28,7 @@ COL_COUNT = 7
 OPPONENT = 2
 TURN = 1
 
-CELL_SIZE = 90
+CELL_SIZE = 80
 PIECE_RADIUS = int(CELL_SIZE / 2 - 4)
 SCREEN_WIDTH = COL_COUNT * CELL_SIZE
 SCREEN_HEIGHT = (ROW_COUNT + 1) * CELL_SIZE
@@ -41,14 +40,14 @@ COLORS = {__EMPTY__: pygame.color.THECOLORS['white'],
           __COMPUTER__: pygame.color.THECOLORS['green']}
 
 
-def log(msg, errorMsg = False, endLine=True):
-    if not errorMsg:
-        print(f'[4InaRow]: {msg}', end=None if endLine else '', flush=True)
+def log(msg, error_msg=False, end_line=True):
+    if not error_msg:
+        print(f'[4InaRow]: {msg}', end=None if end_line else '', flush=True)
     else:
         print("""[4InaRow]: ERROR Log:
-        {errLog}""".format(errLog = '\n\t\t'.join(traceback.format_exc().split('\n'))),
-                           end=None if endLine else '',
-                           flush=True)
+        {errLog}""".format(errLog='\n\t\t'.join(traceback.format_exc().split('\n'))),
+              end=None if end_line else '',
+              flush=True)
 
 
 def init():
@@ -81,11 +80,11 @@ def init():
         SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption("Connect Four")
         if ROW_COUNT < 4 or ROW_COUNT > 9 or COL_COUNT < 4 or COL_COUNT > 9:
-            log("Rows and collumns numbers must be between 6 and 9")
+            log("Rows and columns numbers must be between 6 and 9")
             exit(-1)
     except TypeError:
-        log("Rows and collumns numbers must be integers")
-        log('', errorMsg=True)
+        log("Rows and columns numbers must be integers")
+        log('', error_msg=True)
         exit(-1)
 
     if sys.argv[4].lower() == "player1":
@@ -99,9 +98,9 @@ def init():
         exit(-1)
 
     if OPPONENT == __PLAYER_TWO__ and TURN == __COMPUTER__ \
-       or OPPONENT == __COMPUTER__ and TURN == __PLAYER_TWO__:
-       log("Mismatch of OPPONENT and first player!")
-       exit(-1)
+            or OPPONENT == __COMPUTER__ and TURN == __PLAYER_TWO__:
+        log("Mismatch of OPPONENT and first player!")
+        exit(-1)
 
 
 def init_board(rows, cols):
@@ -191,9 +190,9 @@ def is_win(board, player) -> bool:
     # horizontally and vertically
     # diagonals => range(3, ROW_COUNT) ---- range(COL_COUNT - 3)
     if is_win_horizontally(board, player) \
-       or is_win_horizontally(np.transpose(board), player) \
-       or is_win_diag(board, player) \
-       or is_win_diag(np.flipud(board), player):
+            or is_win_horizontally(np.transpose(board), player) \
+            or is_win_diag(board, player) \
+            or is_win_diag(np.flipud(board), player):
         return True
 
     return False
@@ -253,7 +252,7 @@ def display_diff_choice():
 
 
 def get_difficulty():
-    while(True):
+    while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit(0)
@@ -262,16 +261,16 @@ def get_difficulty():
                 x_pos = event.pos[0]
                 y_pos = event.pos[1]
 
-                if not (x_pos >= SCREEN_WIDTH / 7 and x_pos <= 5 * SCREEN_WIDTH / 7):
+                if not (SCREEN_WIDTH / 7 <= x_pos <= 5 * SCREEN_WIDTH / 7):
                     continue
 
-                if y_pos >= 2 * SCREEN_HEIGHT / 8 and y_pos <= 3.5 * SCREEN_HEIGHT / 8:
+                if 2 * SCREEN_HEIGHT / 8 <= y_pos <= 3.5 * SCREEN_HEIGHT / 8:
                     return 0
 
-                if y_pos >= 4 * SCREEN_HEIGHT / 8 and y_pos <= 5.5 * SCREEN_HEIGHT / 8:
+                if 4 * SCREEN_HEIGHT / 8 <= y_pos <= 5.5 * SCREEN_HEIGHT / 8:
                     return 1
 
-                if y_pos >= 6 * SCREEN_HEIGHT / 8 and y_pos <= 7.5 * SCREEN_HEIGHT / 8:
+                if 6 * SCREEN_HEIGHT / 8 <= y_pos <= 7.5 * SCREEN_HEIGHT / 8:
                     return 2
 
 
@@ -305,10 +304,27 @@ def display_end_screen(winner, is_draw: bool = False):
             sys.exit()
 
 
+def draw_header(x_pos, color):
+    pygame.draw.rect(SCREEN,
+                     pygame.color.THECOLORS['black'],
+                     (0, 0, SCREEN_WIDTH, CELL_SIZE))
+
+    x_pos = PIECE_RADIUS if x_pos < PIECE_RADIUS else \
+        SCREEN_WIDTH - PIECE_RADIUS if x_pos > SCREEN_WIDTH - PIECE_RADIUS else \
+        x_pos
+
+    pygame.draw.circle(SCREEN,
+                       color,
+                       (x_pos, int(CELL_SIZE / 2)),
+                       PIECE_RADIUS)
+
+    pygame.display.update()
+
+
 def get_computer_move(difficulty):
     if difficulty == 0:
-        collumn = random.randrange(0, COL_COUNT)
-        return collumn
+        column = random.randrange(COL_COUNT)
+        return column
 
 
 def game_loop(board):
@@ -320,14 +336,14 @@ def game_loop(board):
         log(diff)
 
     pygame.draw.rect(SCREEN,
-                pygame.color.THECOLORS['black'],
-                (0, 0, SCREEN_WIDTH, CELL_SIZE))
+                     pygame.color.THECOLORS['black'],
+                     (0, 0, SCREEN_WIDTH, CELL_SIZE))
     draw_board(board)
 
     if OPPONENT == __COMPUTER__ and TURN == __COMPUTER__:
-        computed_collumn = get_computer_move(diff)
-        while not place_piece_onefunc(board, computed_collumn, OPPONENT):
-            computed_collumn = get_computer_move(diff)
+        computed_column = get_computer_move(diff)
+        while not place_piece_onefunc(board, computed_column, OPPONENT):
+            computed_column = get_computer_move(diff)
         else:
             pygame.time.wait(500)
             print(board)
@@ -343,41 +359,14 @@ def game_loop(board):
 
             elif event.type == pygame.MOUSEMOTION:
                 x_pos = event.pos[0]
-
-                pygame.draw.rect(SCREEN,
-                                 pygame.color.THECOLORS['black'],
-                                 (0, 0, SCREEN_WIDTH, CELL_SIZE))
-
-                x_pos = PIECE_RADIUS if x_pos < PIECE_RADIUS else \
-                        SCREEN_WIDTH - PIECE_RADIUS if x_pos > SCREEN_WIDTH - PIECE_RADIUS else \
-                        x_pos
-
-                pygame.draw.circle(SCREEN,
-                                   COLORS[TURN],
-                                   (x_pos, int(CELL_SIZE / 2)),
-                                   PIECE_RADIUS)
-
-                pygame.display.update()
+                draw_header(x_pos, COLORS[TURN])
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 x_pos = event.pos[0]
 
                 column = int(math.floor(x_pos / CELL_SIZE))
 
-                pygame.draw.rect(SCREEN,
-                                 pygame.color.THECOLORS['black'],
-                                 (0, 0, SCREEN_WIDTH, CELL_SIZE))
-
-                x_pos = PIECE_RADIUS if x_pos < PIECE_RADIUS else \
-                        SCREEN_WIDTH - PIECE_RADIUS if x_pos > SCREEN_WIDTH - PIECE_RADIUS else \
-                        x_pos
-
-                pygame.draw.circle(SCREEN,
-                                   COLORS[OPPONENT],
-                                   (x_pos, int(CELL_SIZE / 2)),
-                                   PIECE_RADIUS)
-
-                pygame.display.update()
+                draw_header(x_pos, COLORS[OPPONENT])
 
                 if not place_piece_onefunc(board, column, TURN):
                     continue
@@ -391,9 +380,9 @@ def game_loop(board):
                     display_end_screen(TURN, is_draw(board))
 
                 if OPPONENT == __COMPUTER__:
-                    computed_collumn = get_computer_move(diff)
-                    while not place_piece_onefunc(board, computed_collumn, OPPONENT):
-                        computed_collumn = get_computer_move(diff)
+                    computed_column = get_computer_move(diff)
+                    while not place_piece_onefunc(board, computed_column, OPPONENT):
+                        computed_column = get_computer_move(diff)
                     else:
                         pygame.time.wait(500)
                         print(board)
@@ -410,6 +399,6 @@ def game_loop(board):
 if __name__ == '__main__':
     init()
     pygame.init()
-    board = init_board(ROW_COUNT, COL_COUNT)
+    game_board = init_board(ROW_COUNT, COL_COUNT)
 
-    game_loop(board)
+    game_loop(game_board)
