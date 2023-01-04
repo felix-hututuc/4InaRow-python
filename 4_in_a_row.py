@@ -143,7 +143,7 @@ def is_valid_move(board, row, col):
 
 def place_piece_onefunc(board, col, player):
     if col >= COL_COUNT:
-        log("Chosen column out of range")
+        log(f"Chosen column out of range: {col}")
         return False
 
     first_empty = ROW_COUNT - 1
@@ -153,11 +153,11 @@ def place_piece_onefunc(board, col, player):
             break
 
     if first_empty < 0 or first_empty >= ROW_COUNT:
-        log("Row out of range")
+        log(f"Row out of range: {first_empty}")
         return False
 
     if board[first_empty][col] != 0:
-        log("Column is already full!")
+        log(f"Column is already full! ({col})")
         return False
 
     board[first_empty][col] = player
@@ -333,14 +333,14 @@ def evaluate_interval(interval, player):
     if interval.count(player) == 4:
         score += 100
     elif interval.count(player) == 3 and interval.count(__EMPTY__) == 1:
-        score += 10
-    elif interval.count(player) == 2 and interval.count(__EMPTY__) == 2:
         score += 5
+    elif interval.count(player) == 2 and interval.count(__EMPTY__) == 2:
+        score += 2
 
     if interval.count(opponent) == 3 and interval.count(__EMPTY__) == 1:
-        score -= 1000
-    elif interval.count(opponent) == 2 and interval.count(__EMPTY__) == 2:
-        score -= 10
+        score -= 4
+    # elif interval.count(opponent) == 2 and interval.count(__EMPTY__) == 2:
+    #     score -= 10
 
     return score
 
@@ -368,7 +368,7 @@ def score_diagonally(board, player):
 def score_center(board, player):
     center_col = list(np.transpose(board)[COL_COUNT // 2])
     center_count = center_col.count(player)
-    score = center_count * 6
+    score = center_count * 3
 
     return score
 
@@ -392,7 +392,7 @@ def get_valid_cols(board):
 def choose_best_move(board, player):
     valid_cols = get_valid_cols(board)
 
-    best_score = -9999
+    best_score = -10000
     best_col = random.choice(valid_cols)
 
     for col in valid_cols:
@@ -407,11 +407,54 @@ def choose_best_move(board, player):
     return best_col
 
 
+def is_end_state(board):
+    return is_win(board, __COMPUTER__) or is_win(board, __PLAYER_ONE__) or is_draw(board)
+
+
+def minimax(board, depth, maximizing_player):
+    if is_end_state(board):
+        if is_win(board, __COMPUTER__):
+            return (100000000, None)
+        if is_win(board, __PLAYER_ONE__):
+            return (-100000000, None)
+        return (0, None)
+
+    if depth == 0:
+        return (score_state(board, __COMPUTER__), None)
+
+    valid_cols = get_valid_cols(board)
+    if maximizing_player:
+        score = -math.inf
+        best_col = random.choice(valid_cols)
+        for col in valid_cols:
+            temp_board = board.copy()
+            place_piece_onefunc(temp_board, col, __COMPUTER__)
+            new_score = minimax(temp_board, depth - 1, False)[0]
+            if new_score > score:
+                score = new_score
+                best_col = col
+        return score, best_col
+    else:
+        score = math.inf
+        best_col = random.choice(valid_cols)
+        for col in valid_cols:
+            temp_board = board.copy()
+            place_piece_onefunc(temp_board, col, __PLAYER_ONE__)
+            new_score = minimax(temp_board, depth - 1, True)[0]
+            if new_score < score:
+                score = new_score
+                best_col = col
+        return score, best_col
+
+
 def get_computer_move(board, difficulty):
     column = random.randrange(COL_COUNT)
-
+    if difficulty == 0:
+        pygame.time.wait(500)
     if difficulty == 1:
-        column = choose_best_move(board, __COMPUTER__)
+        column = minimax(board, 3, True)[1]
+    elif difficulty == 2:
+        column = minimax(board, 5, True)[1]
 
     return column
 
@@ -473,7 +516,7 @@ def game_loop(board):
                     while not place_piece_onefunc(board, computed_column, OPPONENT):
                         computed_column = get_computer_move(board, diff)
                     else:
-                        pygame.time.wait(500)
+                        # pygame.time.wait(500)
                         print(board)
                         draw_board(board)
 
