@@ -121,6 +121,10 @@ def place_piece(board, row, col, player):
     board[row][col] = player
 
 
+def is_full_col(board, col):
+    return board[0][col] != __EMPTY__
+
+
 def is_valid_move(board, row, col):
     if col >= COL_COUNT:
         log("Chosen column out of range")
@@ -321,10 +325,95 @@ def draw_header(x_pos, color):
     pygame.display.update()
 
 
-def get_computer_move(difficulty):
-    if difficulty == 0:
-        column = random.randrange(COL_COUNT)
-        return column
+def evaluate_interval(interval, player):
+    score = 0
+
+    opponent = __PLAYER_ONE__ if player == __COMPUTER__ else __COMPUTER__
+
+    if interval.count(player) == 4:
+        score += 100
+    elif interval.count(player) == 3 and interval.count(__EMPTY__) == 1:
+        score += 10
+    elif interval.count(player) == 2 and interval.count(__EMPTY__) == 2:
+        score += 5
+
+    if interval.count(opponent) == 3 and interval.count(__EMPTY__) == 1:
+        score -= 1000
+    elif interval.count(opponent) == 2 and interval.count(__EMPTY__) == 2:
+        score -= 10
+
+    return score
+
+
+def score_horizontally(board, player):
+    score = 0
+    for row in board:
+        for col_index in range(COL_COUNT - 3):
+            interval = list(row[col_index: col_index + 4])
+            score += evaluate_interval(interval, player)
+
+    return score
+
+
+def score_diagonally(board, player):
+    score = 0
+    for row_iter in range(3, ROW_COUNT):
+        for col_iter in range(COL_COUNT - 3):
+            interval = [board[row_iter - seq_iter][col_iter + seq_iter] for seq_iter in range(4)]
+            score += evaluate_interval(interval, player)
+
+    return score
+
+
+def score_center(board, player):
+    center_col = list(np.transpose(board)[COL_COUNT // 2])
+    center_count = center_col.count(player)
+    score = center_count * 6
+
+    return score
+
+
+def score_state(board, player):
+    score = 0
+
+    score += score_horizontally(board, player) \
+        + score_horizontally(np.transpose(board), player) \
+        + score_diagonally(board, player) \
+        + score_diagonally(np.flipud(board), player) \
+        + score_center(board, player)
+
+    return score
+
+
+def get_valid_cols(board):
+    return [col for col in range(COL_COUNT) if not is_full_col(board, col)]
+
+
+def choose_best_move(board, player):
+    valid_cols = get_valid_cols(board)
+
+    best_score = -9999
+    best_col = random.choice(valid_cols)
+
+    for col in valid_cols:
+        temp_board = board.copy()
+        place_piece_onefunc(temp_board, col, player)
+        score = score_state(temp_board, player)
+        if score > best_score:
+            best_score = score
+            best_col = col
+
+    log(f"Best col =  {best_col}")
+    return best_col
+
+
+def get_computer_move(board, difficulty):
+    column = random.randrange(COL_COUNT)
+
+    if difficulty == 1:
+        column = choose_best_move(board, __COMPUTER__)
+
+    return column
 
 
 def game_loop(board):
@@ -341,9 +430,9 @@ def game_loop(board):
     draw_board(board)
 
     if OPPONENT == __COMPUTER__ and TURN == __COMPUTER__:
-        computed_column = get_computer_move(diff)
+        computed_column = get_computer_move(board, diff)
         while not place_piece_onefunc(board, computed_column, OPPONENT):
-            computed_column = get_computer_move(diff)
+            computed_column = get_computer_move(board, diff)
         else:
             pygame.time.wait(500)
             print(board)
@@ -380,9 +469,9 @@ def game_loop(board):
                     display_end_screen(TURN, is_draw(board))
 
                 if OPPONENT == __COMPUTER__:
-                    computed_column = get_computer_move(diff)
+                    computed_column = get_computer_move(board, diff)
                     while not place_piece_onefunc(board, computed_column, OPPONENT):
-                        computed_column = get_computer_move(diff)
+                        computed_column = get_computer_move(board, diff)
                     else:
                         pygame.time.wait(500)
                         print(board)
