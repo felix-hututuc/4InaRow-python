@@ -411,16 +411,17 @@ def is_end_state(board):
     return is_win(board, __COMPUTER__) or is_win(board, __PLAYER_ONE__) or is_draw(board)
 
 
-def minimax(board, depth, maximizing_player):
+def minimax_alphabeta(board, depth, alpha, beta, maximizing_player, player):
+    opponent = __PLAYER_ONE__ if player == __COMPUTER__ else __COMPUTER__
     if is_end_state(board):
-        if is_win(board, __COMPUTER__):
-            return (100000000, None)
-        if is_win(board, __PLAYER_ONE__):
-            return (-100000000, None)
-        return (0, None)
+        if is_win(board, player):
+            return math.inf, None
+        if is_win(board, opponent):
+            return -math.inf, None
+        return 0, None
 
     if depth == 0:
-        return (score_state(board, __COMPUTER__), None)
+        return score_state(board, player), None
 
     valid_cols = get_valid_cols(board)
     if maximizing_player:
@@ -428,22 +429,32 @@ def minimax(board, depth, maximizing_player):
         best_col = random.choice(valid_cols)
         for col in valid_cols:
             temp_board = board.copy()
-            place_piece_onefunc(temp_board, col, __COMPUTER__)
-            new_score = minimax(temp_board, depth - 1, False)[0]
+            place_piece_onefunc(temp_board, col, player)
+            new_score = minimax_alphabeta(temp_board, depth - 1, alpha, beta, False, player)[0]
             if new_score > score:
                 score = new_score
                 best_col = col
+
+            alpha = max(alpha, score)
+            if score >= beta:
+                break
+
         return score, best_col
     else:
         score = math.inf
         best_col = random.choice(valid_cols)
         for col in valid_cols:
             temp_board = board.copy()
-            place_piece_onefunc(temp_board, col, __PLAYER_ONE__)
-            new_score = minimax(temp_board, depth - 1, True)[0]
+            place_piece_onefunc(temp_board, col, opponent)
+            new_score = minimax_alphabeta(temp_board, depth - 1, alpha, beta, True, player)[0]
             if new_score < score:
                 score = new_score
                 best_col = col
+
+            beta = min(beta, score)
+            if score <= alpha:
+                break
+
         return score, best_col
 
 
@@ -452,9 +463,9 @@ def get_computer_move(board, difficulty):
     if difficulty == 0:
         pygame.time.wait(500)
     if difficulty == 1:
-        column = minimax(board, 3, True)[1]
+        column = minimax_alphabeta(board, 3, -math.inf, math.inf, True, __COMPUTER__)[1]
     elif difficulty == 2:
-        column = minimax(board, 5, True)[1]
+        column = minimax_alphabeta(board, 6, -math.inf, math.inf, True, __COMPUTER__)[1]
 
     return column
 
@@ -462,6 +473,7 @@ def get_computer_move(board, difficulty):
 def game_loop(board):
     global TURN
 
+    diff = None
     if OPPONENT == __COMPUTER__:
         display_diff_choice()
         diff = get_difficulty()
@@ -497,6 +509,7 @@ def game_loop(board):
                 x_pos = event.pos[0]
 
                 column = int(math.floor(x_pos / CELL_SIZE))
+                # column = minimax_alphabeta(board, 3, -math.inf, math.inf, True, __PLAYER_ONE__)[1]
 
                 draw_header(x_pos, COLORS[OPPONENT])
 
