@@ -27,6 +27,7 @@ ROW_COUNT = 6
 COL_COUNT = 7
 OPPONENT = 2
 TURN = 1
+BIG_NUMBER = 999999
 
 CELL_SIZE = 80
 PIECE_RADIUS = int(CELL_SIZE / 2 - 4)
@@ -331,14 +332,14 @@ def evaluate_interval(interval, player):
     opponent = __PLAYER_ONE__ if player == __COMPUTER__ else __COMPUTER__
 
     if interval.count(player) == 4:
-        score += 100
+        score += BIG_NUMBER
     elif interval.count(player) == 3 and interval.count(__EMPTY__) == 1:
-        score += 5
+        score += 8
     elif interval.count(player) == 2 and interval.count(__EMPTY__) == 2:
-        score += 2
+        score += 4
 
     if interval.count(opponent) == 3 and interval.count(__EMPTY__) == 1:
-        score -= 4
+        score -= 10
     # elif interval.count(opponent) == 2 and interval.count(__EMPTY__) == 2:
     #     score -= 10
 
@@ -414,11 +415,11 @@ def is_end_state(board):
 def minimax_alphabeta(board, depth, alpha, beta, maximizing_player, player):
     opponent = __PLAYER_ONE__ if player == __COMPUTER__ else __COMPUTER__
     if is_end_state(board):
+        if is_draw(board):
+            return 0, None
         if is_win(board, player):
-            return math.inf, None
-        if is_win(board, opponent):
-            return -math.inf, None
-        return 0, None
+            return BIG_NUMBER, None
+        return -BIG_NUMBER, None
 
     if depth == 0:
         return score_state(board, player), None
@@ -436,7 +437,7 @@ def minimax_alphabeta(board, depth, alpha, beta, maximizing_player, player):
                 best_col = col
 
             alpha = max(alpha, score)
-            if score >= beta:
+            if alpha >= beta:
                 break
 
         return score, best_col
@@ -452,7 +453,7 @@ def minimax_alphabeta(board, depth, alpha, beta, maximizing_player, player):
                 best_col = col
 
             beta = min(beta, score)
-            if score <= alpha:
+            if alpha >= beta:
                 break
 
         return score, best_col
@@ -462,12 +463,11 @@ def get_computer_move(board, difficulty):
     column = random.randrange(COL_COUNT)
     if difficulty == 0:
         pygame.time.wait(500)
+        return random.randrange(COL_COUNT)
     if difficulty == 1:
-        column = minimax_alphabeta(board, 3, -math.inf, math.inf, True, __COMPUTER__)[1]
-    elif difficulty == 2:
-        column = minimax_alphabeta(board, 6, -math.inf, math.inf, True, __COMPUTER__)[1]
-
-    return column
+        return minimax_alphabeta(board, 3, -math.inf, math.inf, True, __COMPUTER__)[1]
+    if difficulty == 2:
+        return minimax_alphabeta(board, 5, -math.inf, math.inf, True, __COMPUTER__)[1]
 
 
 def game_loop(board):
@@ -529,7 +529,6 @@ def game_loop(board):
                     while not place_piece_onefunc(board, computed_column, OPPONENT):
                         computed_column = get_computer_move(board, diff)
                     else:
-                        # pygame.time.wait(500)
                         print(board)
                         draw_board(board)
 
