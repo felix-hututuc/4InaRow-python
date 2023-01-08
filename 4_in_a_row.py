@@ -40,6 +40,8 @@ COLORS = {__EMPTY__: pygame.color.THECOLORS['white'],
           __PLAYER_TWO__: pygame.color.THECOLORS['yellow'],
           __COMPUTER__: pygame.color.THECOLORS['green']}
 
+BEST_COL = 0
+
 
 def log(msg, error_msg=False, end_line=True):
     if not error_msg:
@@ -334,14 +336,16 @@ def evaluate_interval(interval, player):
     if interval.count(player) == 4:
         score += BIG_NUMBER
     elif interval.count(player) == 3 and interval.count(__EMPTY__) == 1:
-        score += 8
+        score += 5
     elif interval.count(player) == 2 and interval.count(__EMPTY__) == 2:
-        score += 4
+        score += 2
 
-    if interval.count(opponent) == 3 and interval.count(__EMPTY__) == 1:
-        score -= 10
-    # elif interval.count(opponent) == 2 and interval.count(__EMPTY__) == 2:
-    #     score -= 10
+    if interval.count(opponent) == 4:
+        score -= BIG_NUMBER
+    elif interval.count(opponent) == 3 and interval.count(__EMPTY__) == 1:
+        score -= 5
+    elif interval.count(opponent) == 2 and interval.count(__EMPTY__) == 2:
+        score -= 2
 
     return score
 
@@ -412,62 +416,77 @@ def is_end_state(board):
     return is_win(board, __COMPUTER__) or is_win(board, __PLAYER_ONE__) or is_draw(board)
 
 
+def revert_move(board, row, col):
+    board[row][col] = __EMPTY__
+
+
 def minimax_alphabeta(board, depth, alpha, beta, maximizing_player, player):
+    global BEST_COL
     opponent = __PLAYER_ONE__ if player == __COMPUTER__ else __COMPUTER__
     if is_end_state(board):
         if is_draw(board):
-            return 0, None
+            return 0
         if is_win(board, player):
-            return BIG_NUMBER, None
-        return -BIG_NUMBER, None
+            return BIG_NUMBER
+        return -BIG_NUMBER
 
     if depth == 0:
-        return score_state(board, player), None
+        return score_state(board, player)
 
     valid_cols = get_valid_cols(board)
     if maximizing_player:
         score = -math.inf
-        best_col = random.choice(valid_cols)
+        # best_col = random.choice(valid_cols)
         for col in valid_cols:
-            temp_board = board.copy()
-            place_piece_onefunc(temp_board, col, player)
-            new_score = minimax_alphabeta(temp_board, depth - 1, alpha, beta, False, player)[0]
+            # temp_board = board.copy()
+            # place_piece_onefunc(temp_board, col, player)
+            row = find_first_empty(board, col)
+            place_piece(board, row, col, player)
+            new_score = minimax_alphabeta(board, depth - 1, alpha, beta, False, player)
+            revert_move(board, row, col)
+
             if new_score > score:
                 score = new_score
-                best_col = col
+                alpha = max(alpha, score)
 
-            alpha = max(alpha, score)
-            if alpha >= beta:
-                break
+                BEST_COL = col
 
-        return score, best_col
+                if alpha >= beta:
+                    break
+
+        return score
     else:
         score = math.inf
-        best_col = random.choice(valid_cols)
+        # best_col = random.choice(valid_cols)
         for col in valid_cols:
-            temp_board = board.copy()
-            place_piece_onefunc(temp_board, col, opponent)
-            new_score = minimax_alphabeta(temp_board, depth - 1, alpha, beta, True, player)[0]
-            if new_score < score:
-                score = new_score
-                best_col = col
+            row = find_first_empty(board, col)
+            place_piece(board, row, col, opponent)
+            # place_piece_onefunc(board, col, opponent)
+            score = minimax_alphabeta(board, depth - 1, alpha, beta, True, player)
+            revert_move(board, row, col)
+            # if new_score < score:
+            #     score = new_score
 
             beta = min(beta, score)
             if alpha >= beta:
                 break
 
-        return score, best_col
+        return score
 
 
 def get_computer_move(board, difficulty):
-    column = random.randrange(COL_COUNT)
+    global BEST_COL
     if difficulty == 0:
         pygame.time.wait(500)
         return random.randrange(COL_COUNT)
     if difficulty == 1:
-        return minimax_alphabeta(board, 3, -math.inf, math.inf, True, __COMPUTER__)[1]
+        BEST_COL = random.randrange(COL_COUNT)
+        score = minimax_alphabeta(board, 3, -math.inf, math.inf, True, __COMPUTER__)
+        return BEST_COL
     if difficulty == 2:
-        return minimax_alphabeta(board, 5, -math.inf, math.inf, True, __COMPUTER__)[1]
+        BEST_COL = random.randrange(COL_COUNT)
+        score = minimax_alphabeta(board, 5, -math.inf, math.inf, True, __COMPUTER__)
+        return BEST_COL
 
 
 def game_loop(board):
