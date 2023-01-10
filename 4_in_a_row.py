@@ -40,7 +40,10 @@ COLORS = {__EMPTY__: pygame.color.THECOLORS['white'],
           __PLAYER_TWO__: pygame.color.THECOLORS['yellow'],
           __COMPUTER__: pygame.color.THECOLORS['green']}
 
-BEST_COL = 0
+BEST_COL = random.randrange(COL_COUNT)
+
+column_order = [math.floor(COL_COUNT/2 + (1-2*(i%2))*(i+1)/2) for i in range(COL_COUNT - 1)]
+print(column_order)
 
 
 def log(msg, error_msg=False, end_line=True):
@@ -474,6 +477,45 @@ def minimax_alphabeta(board, depth, alpha, beta, maximizing_player, player):
         return score
 
 
+def negamax(board, depth, player, alpha, beta, maximizing):
+    global BEST_COL
+    opponent = __PLAYER_ONE__ if player == __COMPUTER__ else __COMPUTER__
+
+    if is_draw(board):
+        return 0
+
+    if depth == 0:
+        return  maximizing * score_state(board, player)
+
+    valid_cols = get_valid_cols(board)
+    for col in valid_cols:
+        row = find_first_empty(board, col)
+        place_piece(board, row, col, player)
+        if is_win(board, player):
+            revert_move(board, row, col)
+            BEST_COL = col
+            return maximizing * BIG_NUMBER
+        revert_move(board, row, col)
+
+    best_score = -math.inf
+    for col in column_order:
+        if col not in valid_cols:
+            continue
+        row = find_first_empty(board, col)
+        place_piece(board, row, col, opponent)
+        score = -negamax(board, depth - 1, opponent, -beta, -alpha, -maximizing)
+        revert_move(board, row, col)
+
+        if score > best_score:
+            best_score = score
+            BEST_COL = col
+        alpha = max(alpha, best_score)
+        if alpha >= beta:
+            break
+
+    return best_score
+
+
 def get_computer_move(board, difficulty):
     global BEST_COL
     if difficulty == 0:
@@ -481,7 +523,8 @@ def get_computer_move(board, difficulty):
         return random.randrange(COL_COUNT)
     if difficulty == 1:
         BEST_COL = random.randrange(COL_COUNT)
-        score = minimax_alphabeta(board, 3, -math.inf, math.inf, True, __COMPUTER__)
+        # score = minimax_alphabeta(board, 3, -math.inf, math.inf, True, __COMPUTER__)
+        score = negamax(board, 6, __COMPUTER__, -math.inf, math.inf, 1)
         return BEST_COL
     if difficulty == 2:
         BEST_COL = random.randrange(COL_COUNT)
@@ -528,7 +571,10 @@ def game_loop(board):
                 x_pos = event.pos[0]
 
                 column = int(math.floor(x_pos / CELL_SIZE))
-                # column = minimax_alphabeta(board, 3, -math.inf, math.inf, True, __PLAYER_ONE__)[1]
+                # global BEST_COL
+                # BEST_COL = random.randrange(COL_COUNT)
+                # negamax(board, 6, __PLAYER_ONE__, -math.inf, math.inf)
+                # column = BEST_COL
 
                 draw_header(x_pos, COLORS[OPPONENT])
 
