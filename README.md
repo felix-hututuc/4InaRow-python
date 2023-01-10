@@ -4,11 +4,9 @@ Connect-four game developed in python using pygame.
 The game can be played either against another human player
 or against an AI. The AI has three different difficulty levels:
 
-`easy` - computer makes random moves
-
-`medium` - move based on a `negamax with alpha-beta pruning` algorithm with depth 5
-
-`hard` - move using a `minimax with alpha-beta pruning` algorithm with depth 8
+* `easy` - computer makes random moves
+* `medium` - move based on a `negamax with alpha-beta pruning` algorithm with depth 5
+* `hard` - move using a `minimax with alpha-beta pruning` algorithm with depth 8
 
 ### How to use:
 
@@ -24,14 +22,9 @@ or against an AI. The AI has three different difficulty levels:
 
 ## References:
 
-Pascal Pons - "Solving Connect 4: How to build a perfect AI" - http://blog.gamesolver.org/
-
-Keith Galli - "How to Program a Connect 4 AI (implementing the minimax algorithm)" - https://www.youtube.com/watch?v=MMLtza3CZFM
-
-Wikipedia - Minimax :
-https://en.wikipedia.org/wiki/Minimax
-
-Wikipedia - Alpha-beta Pruning: https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning
-
-Wikipedia - Negamax: https://en.wikipedia.org/wiki/Negamax
+* Pascal Pons - "Solving Connect 4: How to build a perfect AI" - http://blog.gamesolver.org/
+* Keith Galli - "How to Program a Connect 4 AI (implementing the minimax algorithm)" - https://www.youtube.com/watch?v=MMLtza3CZFM
+* Wikipedia - Minimax : https://en.wikipedia.org/wiki/Minimax
+* Wikipedia - Alpha-beta Pruning: https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning
+* Wikipedia - Negamax: https://en.wikipedia.org/wiki/Negamax
 
