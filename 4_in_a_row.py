@@ -42,11 +42,15 @@ COLORS = {__EMPTY__: pygame.color.THECOLORS['white'],
 
 BEST_COL = random.randrange(COL_COUNT)
 
-column_order = [math.floor(COL_COUNT/2 + (1-2*(i%2))*(i+1)/2) for i in range(COL_COUNT - 1)]
-print(column_order)
 
-
-def log(msg, error_msg=False, end_line=True):
+def log(msg: any, error_msg: bool = False, end_line: bool = True) -> None:
+    """
+    Utility function for improved logging.\n
+    :param msg: any arbitrary message to be logged
+    :param error_msg: whether the message comes from an error
+    :param end_line: false if no new line should be added at end of log
+    :return: none
+    """
     if not error_msg:
         print(f'[4InaRow]: {msg}', end=None if end_line else '', flush=True)
     else:
@@ -56,7 +60,11 @@ def log(msg, error_msg=False, end_line=True):
               flush=True)
 
 
-def init():
+def init() -> None:
+    """
+    Initialization function for parsing and validating command line arguments.\n
+    :return: none
+    """
     global ROW_COUNT
     global COL_COUNT
     global OPPONENT
@@ -109,11 +117,23 @@ def init():
         exit(-1)
 
 
-def init_board(rows, cols):
+def init_board(rows: int, cols: int) -> np.ndarray:
+    """
+    Initialize the game board as a 0-filled matrix\n
+    :param rows: number of rows
+    :param cols:  number of columns
+    :return: a 0-filled numpy 'rows' x 'columns' numpy matrix
+    """
     return np.zeros((rows, cols))
 
 
-def find_first_empty(board, col):
+def find_first_empty(board: np.ndarray, col: int) -> int:
+    """
+    Finds the first empty row in which a piece should fall\n
+    :param board: the game board
+    :param col: the column in which the piece falls
+    :return: the row in which the piece will stop
+    """
     first_empty = ROW_COUNT - 1
     for row in range(ROW_COUNT - 1):
         if board[row + 1][col] != 0:
@@ -123,15 +143,36 @@ def find_first_empty(board, col):
     return first_empty
 
 
-def place_piece(board, row, col, player):
+def place_piece(board: np.ndarray, row: int, col: int, player: int) -> None:
+    """
+    Places a piece in a specific slot\n
+    :param board: the game board
+    :param row: chosen row
+    :param col: chosen column
+    :param player: current player
+    :return: None
+    """
     board[row][col] = player
 
 
-def is_full_col(board, col):
+def is_full_col(board: np.ndarray, col: int) -> bool:
+    """
+    Checks whether a column is full\n
+    :param board: the game board
+    :param col: the column to be checked
+    :return: True if the column is full else False
+    """
     return board[0][col] != __EMPTY__
 
 
-def is_valid_move(board, row, col):
+def is_valid_move(board: np.ndarray, row: int, col: int) -> bool:
+    """
+    Checks if a move is valid\n
+    :param board: the game board
+    :param row: the chosen row
+    :param col: the chosen column
+    :return: True if the move can be made, False otherwise
+    """
     if col >= COL_COUNT:
         log("Chosen column out of range")
         return False
@@ -147,7 +188,15 @@ def is_valid_move(board, row, col):
     return True
 
 
-def place_piece_onefunc(board, col, player):
+def place_piece_onefunc(board: np.ndarray, col: int, player: int) -> bool:
+    """
+    Utility function to place a piece in a specific column in a single line.
+    It includes move validation, finding the first empty row and placing the piece.\n
+    :param board: the game board
+    :param col: chosen column
+    :param player: current player
+    :return: True if the piece was placed, False if not
+    """
     if col >= COL_COUNT:
         log(f"Chosen column out of range: {col}")
         return False
@@ -170,13 +219,24 @@ def place_piece_onefunc(board, col, player):
     return True
 
 
-def is_draw(board) -> bool:
+def is_draw(board: np.ndarray) -> bool:
+    """
+    Checks if the game board is in a draw state i.e. the board is filled\n
+    :param board: the game board
+    :return: True if the game is a draw
+    """
     if any([True if 0 in board[i] else False for i in range(ROW_COUNT)]):
         return False
     return True
 
 
-def is_win_horizontally(board, player):
+def is_win_horizontally(board: np.ndarray, player: int) -> bool:
+    """
+    Checks if there are any winning 4-piece horizontal intervals on the board for the chosen player\n
+    :param board: the game board
+    :param player: the chosen player
+    :return: True if the chosen player has won
+    """
     for row in board:
         for col_iter in range(len(row) - 3):
             if all([piece == player
@@ -186,7 +246,14 @@ def is_win_horizontally(board, player):
     return False
 
 
-def is_win_diag(board, player):
+def is_win_diag(board: np.ndarray, player: int) -> bool:
+    """
+    Checks if there are any winning 4-piece upper-diagonal intervals
+    on the board for the chosen player.\n
+    :param board: the game board
+    :param player: the chosen player
+    :return: True if the chosen player has won, else False
+    """
     for row_iter in range(3, len(board)):
         for col_iter in range(len(board[0]) - 3):
             if all([piece == player
@@ -196,9 +263,19 @@ def is_win_diag(board, player):
     return False
 
 
-def is_win(board, player) -> bool:
-    # horizontally and vertically
-    # diagonals => range(3, ROW_COUNT) ---- range(COL_COUNT - 3)
+def is_win(board: np.ndarray, player: int) -> bool:
+    """
+    Checks if the player has won.\n
+
+    The function which checks for horizontal wins
+    is also used for vertical wins by transposing the board.\n
+
+    Similarly, the function which checks for upper-diagonal wins
+    is also used for lower-diagonal wins by flipping the board upside down.\n
+    :param board: the game board
+    :param player: the chosen player
+    :return: True if the player has won, else False
+    """
     if is_win_horizontally(board, player) \
             or is_win_horizontally(np.transpose(board), player) \
             or is_win_diag(board, player) \
@@ -208,7 +285,15 @@ def is_win(board, player) -> bool:
     return False
 
 
-def draw_board(board):
+def draw_board(board: np.ndarray) -> None:
+    """
+    Draws the game board on the screen.\n
+    The function initially fills the board with a blue rectangle,
+    then draws each circle and colours it based on the existing piece/empty spot\n
+    This function is called after each update of the board.\n
+    :param board: the game board
+    :return: None
+    """
     for it_col in range(COL_COUNT):
         for it_row in range(ROW_COUNT):
             pygame.draw.rect(SCREEN,
@@ -227,7 +312,11 @@ def draw_board(board):
     pygame.display.update()
 
 
-def display_diff_choice():
+def display_diff_choice() -> None:
+    """
+    Displays the difficulty selection screen.\n
+    :return: None
+    """
     font = pygame.font.SysFont("verdana", int(SCREEN_WIDTH / 15), True)
     pygame.time.wait(300)
     pygame.draw.rect(SCREEN,
@@ -261,7 +350,11 @@ def display_diff_choice():
     pygame.display.update()
 
 
-def get_difficulty():
+def get_difficulty() -> int:
+    """
+    Gets the selected difficulty level based on the mouse click position\n
+    :return: the difficulty level (0 - easy, 1 - medium, 2 - hard)
+    """
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -284,7 +377,15 @@ def get_difficulty():
                     return 2
 
 
-def display_end_screen(winner, is_draw: bool = False):
+def display_end_screen(winner: int, is_draw: bool = False) -> None:
+    """
+    Displays the end screen, showing the winner / draw.\n
+    Represents the end point of the application.\n
+    It automatically closes after 5 seconds or after a mouse click.\n
+    :param winner: the winner of the game or None if the game ended in a draw
+    :param is_draw: flag for a draw game
+    :return: exits the application
+    """
     if winner == __PLAYER_ONE__:
         winner_str = 'Player one'
     elif winner == __PLAYER_TWO__:
@@ -292,6 +393,7 @@ def display_end_screen(winner, is_draw: bool = False):
     else:
         winner_str = 'Computer'
 
+    # create the end game message and display it
     font = pygame.font.SysFont("verdana", int(SCREEN_WIDTH / 15), True)
     pygame.time.wait(300)
     pygame.draw.rect(SCREEN,
@@ -305,6 +407,8 @@ def display_end_screen(winner, is_draw: bool = False):
     SCREEN.blit(label, (SCREEN_WIDTH / 5, 2.7 * SCREEN_HEIGHT / 7))
     pygame.display.update()
 
+    # start a 5 seconds timer to close the app
+    # check for any mouse click events to close the app sooner
     start_time = time.time()
     while True:
         for event in pygame.event.get():
@@ -314,14 +418,22 @@ def display_end_screen(winner, is_draw: bool = False):
             sys.exit()
 
 
-def draw_header(x_pos, color):
+def draw_header(x_pos: int, color: pygame.color.Color) -> None:
+    """
+    Draws the header of the game app (the black bar where the "floating" piece moves"\n
+    Is called at every update of the header i.e. at every mouse movement.\n
+    :param x_pos: position of the "floating" piece
+    :param color: color of the "floating" piece
+    :return: displays the header
+    """
     pygame.draw.rect(SCREEN,
                      pygame.color.THECOLORS['black'],
                      (0, 0, SCREEN_WIDTH, CELL_SIZE))
 
+    # prevent the floating piece from going out of screen
     x_pos = PIECE_RADIUS if x_pos < PIECE_RADIUS else \
         SCREEN_WIDTH - PIECE_RADIUS if x_pos > SCREEN_WIDTH - PIECE_RADIUS else \
-        x_pos
+            x_pos
 
     pygame.draw.circle(SCREEN,
                        color,
@@ -331,7 +443,13 @@ def draw_header(x_pos, color):
     pygame.display.update()
 
 
-def evaluate_interval(interval, player):
+def evaluate_interval(interval: list[int], player: int) -> int:
+    """
+    Evaluate the score of a position interval of length four for the current player.\n
+    :param interval: list of four consecutive positions from the board
+    :param player: current player
+    :return: total score of the interval
+    """
     score = 0
 
     opponent = __PLAYER_ONE__ if player == __COMPUTER__ else __COMPUTER__
@@ -346,14 +464,22 @@ def evaluate_interval(interval, player):
     if interval.count(opponent) == 4:
         score -= BIG_NUMBER
     elif interval.count(opponent) == 3 and interval.count(__EMPTY__) == 1:
-        score -= 5
+        score -= 10
     elif interval.count(opponent) == 2 and interval.count(__EMPTY__) == 2:
         score -= 2
 
     return score
 
 
-def score_horizontally(board, player):
+def score_horizontally(board: np.ndarray, player: int) -> int:
+    """
+    Evaluates all legal horizontal intervals of four positions on the board
+    by calling the `evaluate_interval` function for each one.\n
+    Can be used to score vertical intervals by transposing the board first.\n
+    :param board: game board
+    :param player: current player
+    :return: the total score of the current state of the game board from all horizontal intervals
+    """
     score = 0
     for row in board:
         for col_index in range(COL_COUNT - 3):
@@ -363,7 +489,15 @@ def score_horizontally(board, player):
     return score
 
 
-def score_diagonally(board, player):
+def score_diagonally(board: np.ndarray, player: int) -> int:
+    """
+    Evaluates all legal lower diagonal intervals of four positions on the board
+    by calling the `evaluate_interval` function for each one.\n
+    Can be used to score upper diagonal intervals by flipping the board upside-down first.\n
+    :param board: game board
+    :param player: current player
+    :return: the total score of the current state of the game board from all lower diagonal intervals
+    """
     score = 0
     for row_iter in range(3, ROW_COUNT):
         for col_iter in range(COL_COUNT - 3):
@@ -373,7 +507,13 @@ def score_diagonally(board, player):
     return score
 
 
-def score_center(board, player):
+def score_center(board: np.ndarray, player: int) -> int:
+    """
+    Evaluates the center column based on the number of player pieces on it.\n
+    :param board: game board
+    :param player: current player
+    :return: score of the center column
+    """
     center_col = list(np.transpose(board)[COL_COUNT // 2])
     center_count = center_col.count(player)
     score = center_count * 3
@@ -381,49 +521,65 @@ def score_center(board, player):
     return score
 
 
-def score_state(board, player):
+def score_state(board: np.ndarray, player: int) -> int:
+    """
+    Calculates the entire score of a game board state.\n
+    :param board: game board
+    :param player: current player
+    :return: full score of the board state
+    """
     score = 0
 
     score += score_horizontally(board, player) \
-        + score_horizontally(np.transpose(board), player) \
-        + score_diagonally(board, player) \
-        + score_diagonally(np.flipud(board), player) \
-        + score_center(board, player)
+             + score_horizontally(np.transpose(board), player) \
+             + score_diagonally(board, player) \
+             + score_diagonally(np.flipud(board), player) \
+             + score_center(board, player)
 
     return score
 
 
-def get_valid_cols(board):
+def get_valid_cols(board: np.ndarray) -> list[int]:
+    """
+    Finds all columns which are not full.\n
+    :param board: game board
+    :return: list of valid columns
+    """
     return [col for col in range(COL_COUNT) if not is_full_col(board, col)]
 
 
-def choose_best_move(board, player):
-    valid_cols = get_valid_cols(board)
-
-    best_score = -10000
-    best_col = random.choice(valid_cols)
-
-    for col in valid_cols:
-        temp_board = board.copy()
-        place_piece_onefunc(temp_board, col, player)
-        score = score_state(temp_board, player)
-        if score > best_score:
-            best_score = score
-            best_col = col
-
-    log(f"Best col =  {best_col}")
-    return best_col
-
-
-def is_end_state(board):
+def is_end_state(board: np.ndarray) -> bool:
+    """
+    Checks whether the board is in an end state i.e. either player has won or draw\n
+    :param board: game board
+    :return: true if the board is in an end state, else false
+    """
     return is_win(board, __COMPUTER__) or is_win(board, __PLAYER_ONE__) or is_draw(board)
 
 
-def revert_move(board, row, col):
+def revert_move(board: np.ndarray, row: int, col: int) -> None:
+    """
+    Reverts a previously made move i.e. sets the position `(row, col)` as empty.\n
+    :param board: game board
+    :param row: move row
+    :param col: move column
+    :return: None
+    """
     board[row][col] = __EMPTY__
 
 
-def minimax_alphabeta(board, depth, alpha, beta, maximizing_player, player):
+def minimax_alphabeta(board: np.ndarray, depth: int, alpha: float, beta: float, maximizing_player: bool, player: int):
+    """
+    Implementation of the minimax algorithm with specified depth and alpha-beta pruning.\n
+    The algorithm sets the global variable `BEST_COL` to the best next move found and returns the score of that move.\n
+    :param board: game board
+    :param depth: maximum depth for the search tree
+    :param alpha: minimum score to find
+    :param beta: maximum score to find
+    :param maximizing_player: True if on a maximizing level in the tree, False on minimizing
+    :param player: current player
+    :return: the score of the best next move found
+    """
     global BEST_COL
     opponent = __PLAYER_ONE__ if player == __COMPUTER__ else __COMPUTER__
     if is_end_state(board):
@@ -439,10 +595,7 @@ def minimax_alphabeta(board, depth, alpha, beta, maximizing_player, player):
     valid_cols = get_valid_cols(board)
     if maximizing_player:
         score = -math.inf
-        # best_col = random.choice(valid_cols)
         for col in valid_cols:
-            # temp_board = board.copy()
-            # place_piece_onefunc(temp_board, col, player)
             row = find_first_empty(board, col)
             place_piece(board, row, col, player)
             new_score = minimax_alphabeta(board, depth - 1, alpha, beta, False, player)
@@ -460,11 +613,9 @@ def minimax_alphabeta(board, depth, alpha, beta, maximizing_player, player):
         return score
     else:
         score = math.inf
-        # best_col = random.choice(valid_cols)
         for col in valid_cols:
             row = find_first_empty(board, col)
             place_piece(board, row, col, opponent)
-            # place_piece_onefunc(board, col, opponent)
             score = minimax_alphabeta(board, depth - 1, alpha, beta, True, player)
             revert_move(board, row, col)
             # if new_score < score:
@@ -477,17 +628,34 @@ def minimax_alphabeta(board, depth, alpha, beta, maximizing_player, player):
         return score
 
 
-def negamax(board, depth, player, alpha, beta, maximizing):
+def negamax(board: np.ndarray, depth: int, player: int, alpha: float, beta: float, maximizing: int):
+    """
+    Implementation of the negamax algorithm with specified depth and alpha-beta pruning.\n
+    The algorithm sets the global variable `BEST_COL` to the best next move found and returns the score of that move.\n
+    :param board: game board
+    :param depth: maximum depth for the search tree
+    :param player: current player
+    :param alpha: minimum score to find
+    :param beta: maximum score to find
+    :param maximizing: 1 if trying to maximize, -1 for minimizing (negating score)
+    :return: the score of the best next move found
+    """
+
     global BEST_COL
+
+    # order in which to check the next possible moves in the AI algorithms
+    column_order = [math.floor(COL_COUNT / 2 + (1 - 2 * (i % 2)) * (i + 1) / 2) for i in range(COL_COUNT - 1)]
     opponent = __PLAYER_ONE__ if player == __COMPUTER__ else __COMPUTER__
 
     if is_draw(board):
         return 0
 
     if depth == 0:
-        return  maximizing * score_state(board, player)
+        return maximizing * score_state(board, player)
 
     valid_cols = get_valid_cols(board)
+
+    # check if there is any direct next move to win the game
     for col in valid_cols:
         row = find_first_empty(board, col)
         place_piece(board, row, col, player)
@@ -516,7 +684,13 @@ def negamax(board, depth, player, alpha, beta, maximizing):
     return best_score
 
 
-def get_computer_move(board, difficulty):
+def get_computer_move(board: np.ndarray, difficulty: int) -> int:
+    """
+    Get the next move for the computer player based on the difficulty level.\n
+    :param board: game board
+    :param difficulty: chosen difficulty level
+    :return: column number for the move
+    """
     global BEST_COL
     if difficulty == 0:
         pygame.time.wait(500)
@@ -524,7 +698,7 @@ def get_computer_move(board, difficulty):
     if difficulty == 1:
         BEST_COL = random.randrange(COL_COUNT)
         # score = minimax_alphabeta(board, 3, -math.inf, math.inf, True, __COMPUTER__)
-        score = negamax(board, 6, __COMPUTER__, -math.inf, math.inf, 1)
+        score = negamax(board, 8, __COMPUTER__, -math.inf, math.inf, 1)
         return BEST_COL
     if difficulty == 2:
         BEST_COL = random.randrange(COL_COUNT)
@@ -532,20 +706,28 @@ def get_computer_move(board, difficulty):
         return BEST_COL
 
 
-def game_loop(board):
+def game_loop(board: np.ndarray) -> None:
+    """
+    Main game loop.\n
+    :param board: game board
+    :return: None
+    """
     global TURN
 
+    # display the difficulty selection screen
     diff = None
     if OPPONENT == __COMPUTER__:
         display_diff_choice()
         diff = get_difficulty()
         log(diff)
 
+    # display the initial state of the board
     pygame.draw.rect(SCREEN,
                      pygame.color.THECOLORS['black'],
                      (0, 0, SCREEN_WIDTH, CELL_SIZE))
     draw_board(board)
 
+    # if the computer makes the first move, do it before the start of the loop
     if OPPONENT == __COMPUTER__ and TURN == __COMPUTER__:
         computed_column = get_computer_move(board, diff)
         while not place_piece_onefunc(board, computed_column, OPPONENT):
@@ -556,9 +738,9 @@ def game_loop(board):
             draw_board(board)
             TURN = __PLAYER_ONE__
 
-    while True:
+    while True:  # start the loop
 
-        for event in pygame.event.get():
+        for event in pygame.event.get():  # event handler
 
             if event.type == pygame.QUIT:
                 sys.exit()
