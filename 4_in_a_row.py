@@ -698,11 +698,11 @@ def get_computer_move(board: np.ndarray, difficulty: int) -> int:
     if difficulty == 1:
         BEST_COL = random.randrange(COL_COUNT)
         # score = minimax_alphabeta(board, 3, -math.inf, math.inf, True, __COMPUTER__)
-        score = negamax(board, 8, __COMPUTER__, -math.inf, math.inf, 1)
+        score = minimax_alphabeta(board, 5, -math.inf, math.inf, True, __COMPUTER__)
         return BEST_COL
     if difficulty == 2:
         BEST_COL = random.randrange(COL_COUNT)
-        score = minimax_alphabeta(board, 5, -math.inf, math.inf, True, __COMPUTER__)
+        score = negamax(board, 8, __COMPUTER__, -math.inf, math.inf, 1)
         return BEST_COL
 
 
