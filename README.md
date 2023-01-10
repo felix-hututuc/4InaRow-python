@@ -10,7 +10,7 @@ or against an AI. The AI has three different difficulty levels:
 
 `hard` - move using a `minimax with alpha-beta pruning` algorithm with depth 8
 
-How to use:
+### How to use:
 
 `python 4_in_a_row.py <opponent> <no_rows> <no_cols> <first2move>`
 
@@ -22,7 +22,7 @@ How to use:
 
 `first2move` -> player to make the first move: `player1`, `player2`, `computer`
 
-References:
+## References:
 
 Pascal Pons - "Solving Connect 4: How to build a perfect AI" - http://blog.gamesolver.org/
 
