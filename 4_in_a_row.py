@@ -5,6 +5,8 @@ import sys
 import time
 import traceback
 
+from numpy import ndarray
+
 try:
     import numpy as np
 except ImportError:
@@ -42,6 +44,8 @@ COLORS = {__EMPTY__: pygame.color.THECOLORS['white'],
 
 BEST_COL = random.randrange(COL_COUNT)
 
+INIT_COL_COUNT = 7
+
 
 def log(msg: any, error_msg: bool = False, end_line: bool = True) -> None:
     """
@@ -72,6 +76,7 @@ def init() -> None:
     global SCREEN_HEIGHT
     global SCREEN_WIDTH
     global SCREEN
+    global INIT_COL_COUNT
 
     if len(sys.argv) < 5:
         log("Wrong number of arguments!")
@@ -89,12 +94,13 @@ def init() -> None:
     try:
         ROW_COUNT = int(sys.argv[2])
         COL_COUNT = int(sys.argv[3])
+        INIT_COL_COUNT = COL_COUNT
         SCREEN_WIDTH = COL_COUNT * CELL_SIZE
         SCREEN_HEIGHT = (ROW_COUNT + 1) * CELL_SIZE
         SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption("Connect Four")
         if ROW_COUNT < 4 or ROW_COUNT > 9 or COL_COUNT < 4 or COL_COUNT > 9:
-            log("Rows and columns numbers must be between 6 and 9")
+            log("Rows and columns numbers must be between 4 and 9")
             exit(-1)
     except TypeError:
         log("Rows and columns numbers must be integers")
@@ -188,14 +194,36 @@ def is_valid_move(board: np.ndarray, row: int, col: int) -> bool:
     return True
 
 
-def place_piece_onefunc(board: np.ndarray, col: int, player: int) -> bool:
+def grow_board(board: np.ndarray, direction: int) -> np.ndarray:
+    """
+    Extends the game board with a new column in either direction\n
+    :param board: game board
+    :param direction: direction to extend the board: 0 - right, 1 - left
+    :return: the newly extended game board
+    """
+    global COL_COUNT, SCREEN, SCREEN_WIDTH
+
+    new_board = init_board(ROW_COUNT, COL_COUNT + 1)
+
+    for row_index in range(ROW_COUNT):
+        for col_index in range(COL_COUNT):
+            new_board[row_index][col_index + direction] = board[row_index][col_index]
+
+    COL_COUNT += 1
+    SCREEN_WIDTH = COL_COUNT * CELL_SIZE
+    SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+
+    return new_board
+
+
+def place_piece_onefunc(board: np.ndarray, col: int, player: int) -> bool | tuple[bool, ndarray]:
     """
     Utility function to place a piece in a specific column in a single line.
     It includes move validation, finding the first empty row and placing the piece.\n
     :param board: the game board
     :param col: chosen column
     :param player: current player
-    :return: True if the piece was placed, False if not
+    :return: True if the piece was placed, False if not and the new board
     """
     if col >= COL_COUNT:
         log(f"Chosen column out of range: {col}")
@@ -216,7 +244,17 @@ def place_piece_onefunc(board: np.ndarray, col: int, player: int) -> bool:
         return False
 
     board[first_empty][col] = player
-    return True
+
+    new_board = None
+    if COL_COUNT < 2 * INIT_COL_COUNT:
+        if col == 0:
+            new_board = grow_board(board, 1)
+        elif col == COL_COUNT - 1:
+            new_board = grow_board(board, 0)
+        else:
+            new_board = board
+
+    return True, new_board
 
 
 def is_draw(board: np.ndarray) -> bool:
@@ -420,7 +458,7 @@ def display_end_screen(winner: int, is_draw: bool = False) -> None:
 
 def draw_header(x_pos: int, color: pygame.color.Color) -> None:
     """
-    Draws the header of the game app (the black bar where the "floating" piece moves"\n
+    Draws the header of the game app (the black bar where the "floating" piece moves)\n
     Is called at every update of the header i.e. at every mouse movement.\n
     :param x_pos: position of the "floating" piece
     :param color: color of the "floating" piece
@@ -699,10 +737,12 @@ def get_computer_move(board: np.ndarray, difficulty: int) -> int:
         BEST_COL = random.randrange(COL_COUNT)
         # score = minimax_alphabeta(board, 3, -math.inf, math.inf, True, __COMPUTER__)
         score = minimax_alphabeta(board, 5, -math.inf, math.inf, True, __COMPUTER__)
+        log(score)
         return BEST_COL
     if difficulty == 2:
         BEST_COL = random.randrange(COL_COUNT)
         score = negamax(board, 8, __COMPUTER__, -math.inf, math.inf, 1)
+        log(score)
         return BEST_COL
 
 
@@ -730,13 +770,16 @@ def game_loop(board: np.ndarray) -> None:
     # if the computer makes the first move, do it before the start of the loop
     if OPPONENT == __COMPUTER__ and TURN == __COMPUTER__:
         computed_column = get_computer_move(board, diff)
-        while not place_piece_onefunc(board, computed_column, OPPONENT):
+        is_placed, new_board = place_piece_onefunc(board, computed_column, OPPONENT)
+        board = new_board
+        while not is_placed:
             computed_column = get_computer_move(board, diff)
-        else:
-            pygame.time.wait(500)
-            print(board)
-            draw_board(board)
-            TURN = __PLAYER_ONE__
+            is_placed, new_board = place_piece_onefunc(board, computed_column, OPPONENT)
+            board = new_board
+        pygame.time.wait(500)
+        print(board)
+        draw_board(board)
+        TURN = __PLAYER_ONE__
 
     while True:  # start the loop
 
@@ -760,7 +803,9 @@ def game_loop(board: np.ndarray) -> None:
 
                 draw_header(x_pos, COLORS[OPPONENT])
 
-                if not place_piece_onefunc(board, column, TURN):
+                is_placed, new_board = place_piece_onefunc(board, column, TURN)
+                board = new_board
+                if not is_placed:
                     continue
                 else:
                     print(board)
@@ -773,11 +818,14 @@ def game_loop(board: np.ndarray) -> None:
 
                 if OPPONENT == __COMPUTER__:
                     computed_column = get_computer_move(board, diff)
-                    while not place_piece_onefunc(board, computed_column, OPPONENT):
+                    is_placed, new_board = place_piece_onefunc(board, computed_column, OPPONENT)
+                    board = new_board
+                    while not is_placed:
                         computed_column = get_computer_move(board, diff)
-                    else:
-                        print(board)
-                        draw_board(board)
+                        is_placed, new_board = place_piece_onefunc(board, computed_column, OPPONENT)
+                        board = new_board
+                    print(board)
+                    draw_board(board)
 
                     if is_win(board, OPPONENT) or is_draw(board):
                         print(board)
