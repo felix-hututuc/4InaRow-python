@@ -214,7 +214,7 @@ def grow_board(board: np.ndarray, direction: int) -> np.ndarray:
     return new_board
 
 
-def place_piece_onefunc(board: np.ndarray, col: int, player: int) -> bool | tuple[bool, ndarray]:
+def place_piece_onefunc(board: np.ndarray, col: int, player: int) -> bool | tuple[bool, np.ndarray]:
     """
     Utility function to place a piece in a specific column in a single line.
     It includes move validation, finding the first empty row and placing the piece.\n
@@ -469,7 +469,7 @@ def draw_header(x_pos: int, color: pygame.color.Color) -> None:
     # prevent the floating piece from going out of screen
     x_pos = PIECE_RADIUS if x_pos < PIECE_RADIUS else \
         SCREEN_WIDTH - PIECE_RADIUS if x_pos > SCREEN_WIDTH - PIECE_RADIUS else \
-            x_pos
+        x_pos
 
     pygame.draw.circle(SCREEN,
                        color,
@@ -567,10 +567,10 @@ def score_state(board: np.ndarray, player: int) -> int:
     score = 0
 
     score += score_horizontally(board, player) \
-             + score_horizontally(np.transpose(board), player) \
-             + score_diagonally(board, player) \
-             + score_diagonally(np.flipud(board), player) \
-             + score_center(board, player)
+        + score_horizontally(np.transpose(board), player) \
+        + score_diagonally(board, player) \
+        + score_diagonally(np.flipud(board), player) \
+        + score_center(board, player)
 
     return score
 
