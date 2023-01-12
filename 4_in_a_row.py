@@ -5,8 +5,6 @@ import sys
 import time
 import traceback
 
-from numpy import ndarray
-
 try:
     import numpy as np
 except ImportError:
